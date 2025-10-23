@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Number Bonds — Guess the Middle</title>
+  <style>
+    :root {
+      --bg: #f6fbff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --accent2: #f59e0b;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(900px 900px at 110% -10%, #dbeafe 0, transparent 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+      padding: 24px;
+    }
+    .wrap {
+      width: min(720px, 94vw);
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.08);
+      padding: clamp(18px, 4vw, 28px);
+      text-align: center;
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 3.6vw, 30px); }
+    .muted { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+    .eqn {
+      display: inline-flex; align-items: center; gap: clamp(10px, 2.5vw, 24px);
+      font-weight: 800; margin: 8px 0 18px;
+      font-size: clamp(44px, 9vw, 84px);
+    }
+    .box {
+      min-width: 1.6em; min-height: 1.2em; display: inline-flex; align-items: center; justify-content: center;
+      padding: .08em .3em; border-radius: 14px; border: 3px dashed #cbd5e1; background: #f8fafc;
+    }
+    .revealed { border-style: solid; border-color: #86efac; background: #f0fdf4; color: #065f46; }
+    .controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    button {
+      border: 0; cursor: pointer; border-radius: 12px; padding: 14px 20px; font-weight: 800;
+      font-size: clamp(16px, 3.4vw, 20px);
+    }
+    .btn-show { background: var(--accent); color: white; }
+    .btn-next { background: var(--accent2); color: #111827; }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Number bonds: guess the middle number">
+    <h1 id="title">Number Bonds (to 5, 10 & 20)</h1>
+    <div class="eqn" aria-live="polite" aria-atomic="true">
+      <span id="left" class="num">?</span>
+      <span aria-hidden="true">+</span>
+      <span id="mid" class="box" aria-label="hidden middle number">?</span>
+      <span aria-hidden="true">=</span>
+      <span id="right" class="num">?</span>
+    </div>
+
+    <div class="controls">
+      <button class="btn-show" id="show">Show Answer</button>
+      <button class="btn-next" id="next">Next</button>
+    </div>
+  </div>
+
+<script>
+  (function () {
+    const DEFAULT_TOTALS = [5, 10, 20];
+    const $left = document.getElementById('left');
+    const $mid = document.getElementById('mid');
+    const $right = document.getElementById('right');
+    const $show = document.getElementById('show');
+    const $next = document.getElementById('next');
+    const $title = document.getElementById('title');
+
+    function parseTotals() {
+      const params = new URLSearchParams(window.location.search);
+      const rawTotals = params.get('totals') || params.get('total');
+      if (!rawTotals) return [...DEFAULT_TOTALS];
+
+      const candidates = rawTotals
+        .split(',')
+        .map((value) => parseInt(value.trim(), 10))
+        .filter((value) => Number.isInteger(value) && value > 0);
+
+      const unique = [...new Set(candidates)];
+      return unique.length ? unique : [...DEFAULT_TOTALS];
+    }
+
+    const totals = parseTotals().sort((a, b) => a - b);
+
+    function formatTotalsLabel(values) {
+      if (values.length === 1) return values[0];
+      const start = values.slice(0, -1).join(', ');
+      return `${start} & ${values[values.length - 1]}`;
+    }
+
+    const totalsLabel = formatTotalsLabel(totals);
+    document.title = `Number Bonds to ${totalsLabel}`;
+    $title.textContent = `Number Bonds (to ${totalsLabel})`;
+
+    let left = 0, total = 10, middle = 0, revealed = false;
+
+    function newQuestion() {
+      total = totals[Math.floor(Math.random() * totals.length)];
+      left = Math.floor(Math.random() * (total + 1)); // 0..total
+      middle = total - left;
+      revealed = false;
+
+      $left.textContent = left;
+      $right.textContent = total;
+      $mid.textContent = '？'; // pretty question mark
+      $mid.classList.remove('revealed');
+      $show.disabled = false;
+    }
+
+    function showAnswer() {
+      if (revealed) return;
+      revealed = true;
+      $mid.textContent = middle;
+      $mid.classList.add('revealed');
+      $show.disabled = true;
+    }
+
+    $show.addEventListener('click', showAnswer);
+    $next.addEventListener('click', newQuestion);
+
+    // Keyboard helpers: Enter to show, Space for next
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); showAnswer(); }
+      if (e.key === ' ') { e.preventDefault(); newQuestion(); }
+    });
+
+    newQuestion();
+  })();
+</script>
+</body>
+</html>
