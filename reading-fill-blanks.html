@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reading Practice — Fill in the Blanks</title>
+  <style>
+    :root {
+      --bg: #f6fbff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --accent: #ec4899;
+      --accent2: #14b8a6;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(900px 900px at 110% -10%, #fce7f3 0, transparent 60%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+      padding: 24px;
+    }
+    .wrap {
+      width: min(820px, 96vw);
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.08);
+      padding: clamp(18px, 4vw, 36px);
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 34px); }
+    .muted { color: var(--muted); font-size: 15px; margin: 0 0 20px; }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 24px 0 18px;
+      padding: 0;
+      list-style: none;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(236, 72, 153, 0.12);
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .lines {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .line {
+      font-size: clamp(17px, 2vw, 20px);
+      line-height: 1.5;
+    }
+    .blank {
+      padding: 0 8px;
+      border-bottom: 3px solid rgba(236, 72, 153, 0.4);
+      font-weight: 700;
+      color: #c026d3;
+      white-space: nowrap;
+    }
+    .revealed {
+      border-color: rgba(20, 184, 166, 0.6);
+      color: #0f766e;
+    }
+    .word-bank-title {
+      margin: 30px 0 6px;
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .controls {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 14px 22px;
+      font-weight: 800;
+      font-size: clamp(16px, 3vw, 20px);
+    }
+    .btn-show { background: var(--accent); color: white; }
+    .btn-next { background: var(--accent2); color: #0f172a; }
+    .back {
+      display: inline-block;
+      margin-top: 18px;
+      font-size: 16px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back:hover,
+    .back:focus {
+      text-decoration: underline;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Reading practice: fill in the blanks">
+    <h1>Reading Practice — Fill in the Blanks</h1>
+    <p class="muted">
+      Year 2 SAT warm-up: read the paragraph, choose the best words, then reveal the answers when you are ready.
+    </p>
+
+    <ul class="lines" id="lines" aria-live="polite" aria-atomic="true"></ul>
+
+    <h2 class="word-bank-title">Word bank</h2>
+    <ul class="options" id="options"></ul>
+
+    <div class="controls">
+      <button class="btn-show" id="show">Show answers</button>
+      <button class="btn-next" id="next">Next paragraph</button>
+    </div>
+    <a class="back" href="index.html">← Back to menu</a>
+  </div>
+
+<script>
+  (function () {
+    const LINES_PER_EXERCISE = 10;
+
+    const WORD_BANK = {
+      names: ['Amelia', 'Oliver', 'Sophie', 'Jack', 'Mia', 'Noah', 'Emily', 'Harry', 'Isla', 'Leo', 'Grace', 'Arthur', 'Ava', 'George', 'Ella', 'Thomas', 'Freya', 'Oscar', 'Poppy', 'Liam', 'Chloe', 'Lucas', 'Maya', 'Jacob', 'Hannah', 'Elsie', 'James', 'Ruby', 'Logan', 'Evie'],
+      adjectives: ['bright', 'brave', 'curious', 'playful', 'cheerful', 'gentle', 'tidy', 'helpful', 'lively', 'sparkling', 'colourful', 'busy', 'quiet', 'calm', 'eager', 'kind', 'clever', 'bold', 'friendly', 'jolly', 'merry', 'neat', 'proud', 'ready', 'careful', 'happy', 'polished', 'peaceful', 'shiny', 'steady'],
+      verbs: ['explore', 'gather', 'sketch', 'collect', 'measure', 'compare', 'plan', 'discuss', 'explain', 'observe', 'inspect', 'record', 'sort', 'arrange', 'design', 'discover', 'share', 'prepare', 'check', 'tidy', 'guide', 'create', 'organise', 'solve', 'review', 'study', 'build', 'investigate', 'summarise', 'present'],
+      actions: ['singing', 'chatting', 'reading', 'whispering', 'giggling', 'painting', 'sketching', 'building', 'counting', 'sharing', 'mixing', 'sorting', 'measuring', 'dancing', 'clapping', 'colouring', 'tidying', 'writing', 'humming', 'playing', 'designing', 'planting', 'crafting', 'drumming', 'drawing', 'presenting', 'rehearsing', 'debating', 'acting', 'cheering'],
+      places: ['library', 'garden', 'playground', 'seaside', 'meadow', 'market', 'classroom', 'museum', 'riverbank', 'farmyard', 'kitchen', 'workshop', 'castle', 'village', 'theatre', 'forest', 'harbour', 'hillside', 'school hall', 'music room', 'science lab', 'art studio', 'nature trail', 'sports field', 'village green', 'town square', 'reading corner', 'computer suite', 'assembly hall', 'story tent'],
+      animals: ['fox', 'kitten', 'puppy', 'sparrow', 'badger', 'owl', 'otter', 'pony', 'hedgehog', 'calf', 'duckling', 'lamb', 'rabbit', 'hamster', 'tortoise', 'eagle', 'seal', 'heron', 'squirrel', 'goose', 'ferret', 'frog', 'robin', 'mole', 'puffin', 'dolphin', 'whale', 'heron chick', 'swan', 'stoat'],
+      objects: ['compass', 'basket', 'lantern', 'pencil', 'jumper', 'ruler', 'picture', 'bookmark', 'telescope', 'map', 'notebook', 'football', 'painting', 'journal', 'diagram', 'worksheet', 'magnifier', 'globe', 'model', 'clipboard', 'storybook', 'chalkboard', 'tablet', 'watering can', 'binoculars', 'camera', 'measuring tape', 'thermos', 'backpack', 'whiteboard'],
+      foods: ['sandwich', 'porridge', 'apple', 'bread', 'pancake', 'cabbage', 'carrot', 'berry', 'cookie', 'soup', 'stew', 'pudding', 'yoghurt', 'granola', 'juice', 'biscuit', 'banana', 'wrap', 'muffin', 'smoothie', 'salad', 'pear', 'orange', 'crumpet', 'toast', 'rice', 'pasta', 'cake', 'shortbread', 'fruit salad'],
+      weather: ['sunny', 'rainy', 'windy', 'frosty', 'misty', 'breezy', 'showery', 'cloudy', 'stormy', 'warm', 'chilly', 'snowy', 'drizzly', 'calm', 'foggy', 'bright', 'wintry', 'humid', 'cool', 'blustery', 'clear', 'damp', 'sparkling', 'gusty', 'fresh', 'still', 'overcast', 'crisp', 'mild', 'bitter'],
+      feelings: ['excited', 'nervous', 'hopeful', 'pleased', 'grateful', 'proud', 'thoughtful', 'joyful', 'content', 'curious', 'relaxed', 'confident', 'amused', 'interested', 'calm', 'determined', 'glad', 'delighted', 'peaceful', 'charmed', 'surprised', 'encouraged', 'positive', 'jubilant', 'cheerful', 'reassured', 'brave', 'patient', 'spirited', 'enthusiastic'],
+      numbers: ['two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty', 'twenty-one', 'twenty-two', 'twenty-three', 'twenty-four', 'twenty-five', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty'],
+      topics: ['science', 'history', 'music', 'nature', 'space', 'weather', 'plants', 'animals', 'castles', 'poems', 'numbers', 'stories', 'maps', 'friendship', 'seasons', 'myths', 'riddles', 'inventions', 'recycling', 'journeys', 'feelings', 'teamwork', 'holidays', 'traditions', 'oceans', 'fossils', 'fairy tales', 'volcanoes', 'rainforests', 'engineers'],
+      times: ['playtime', 'lunchtime', 'story time', 'assembly', 'snack time', 'golden time', 'reading time', 'maths hour', 'science hour', 'art time', 'music time', 'PE lesson', 'morning break', 'afternoon break', 'project time', 'practice time', 'tidy-up time', 'library time', 'garden time', 'writing time', 'group time', 'circle time', 'phonics', 'topic time', 'team time', 'club time', 'quiet time', 'revision time', 'study time', 'target time']
+    };
+
+    const PATTERNS = [
+      { template: '{Name} packed their {adjective} bag for the trip.', blank: 'adjective', slots: { Name: 'names', adjective: 'adjectives' } },
+      { template: 'On the {weather} morning, the class walked to the {place}.', blank: 'weather', slots: { weather: 'weather', place: 'places' } },
+      { template: '{Name} felt {feeling} as the bus arrived at the {place}.', blank: 'feeling', slots: { Name: 'names', feeling: 'feelings', place: 'places' } },
+      { template: 'The group stopped to {verb} sketches in the {place}.', blank: 'verb', slots: { verb: 'verbs', place: 'places' } },
+      { template: 'The friendly {animal} watched them from the {place} gate.', blank: 'animal', slots: { animal: 'animals', place: 'places' } },
+      { template: '{Name} carried the map into the {place}.', blank: 'place', slots: { Name: 'names', place: 'places' } },
+      { template: 'The teacher chose {number} pupils to help today.', blank: 'number', slots: { number: 'numbers' } },
+      { template: 'Everyone shared some {food} after the walk.', blank: 'food', slots: { food: 'foods' } },
+      { template: '{Name} checked the {object} for new clues.', blank: 'object', slots: { Name: 'names', object: 'objects' } },
+      { template: 'They listened to the {adjective} story about explorers.', blank: 'adjective', slots: { adjective: 'adjectives' } },
+      { template: 'The {weather} breeze made the flags flutter gently.', blank: 'weather', slots: { weather: 'weather' } },
+      { template: '{Name} kept a list of {adjective} ideas in their notebook.', blank: 'adjective', slots: { Name: 'names', adjective: 'adjectives' } },
+      { template: 'A team of classmates practised {action} together.', blank: 'action', slots: { action: 'actions' } },
+      { template: 'The display showed {number} shells beside the model boat.', blank: 'number', slots: { number: 'numbers' } },
+      { template: 'They felt {feeling} when the lunch bell rang.', blank: 'feeling', slots: { feeling: 'feelings' } },
+      { template: '{Name} drew a map of the {adjective} playground.', blank: 'adjective', slots: { Name: 'names', adjective: 'adjectives' } },
+      { template: 'A curious {animal} perched on the garden fence.', blank: 'animal', slots: { animal: 'animals' } },
+      { template: 'The class wrote about their trip to the {place}.', blank: 'place', slots: { place: 'places' } },
+      { template: 'Tom practised {action} to the gentle music.', blank: 'action', slots: { action: 'actions' } },
+      { template: 'They promised to {verb} their findings with the headteacher.', blank: 'verb', slots: { verb: 'verbs' } },
+      { template: '{Name} spotted a small {animal} near the {place}.', blank: 'animal', slots: { Name: 'names', animal: 'animals', place: 'places' } },
+      { template: 'The class gathered {number} leaves during {Name}\'s lesson.', blank: 'number', slots: { number: 'numbers', Name: 'names' } },
+      { template: 'They tasted some {food} in the kitchen.', blank: 'food', slots: { food: 'foods' } },
+      { template: '{Name} carefully labelled the {object} on the shelf.', blank: 'object', slots: { Name: 'names', object: 'objects' } },
+      { template: 'The {place} was filled with {adjective} displays.', blank: 'adjective', slots: { place: 'places', adjective: 'adjectives' } },
+      { template: 'The weather turned {weather} during the activity.', blank: 'weather', slots: { weather: 'weather' } },
+      { template: '{Name} followed the footprints of a {animal} near the {place}.', blank: 'animal', slots: { Name: 'names', animal: 'animals', place: 'places' } },
+      { template: 'The pupils recorded {number} facts in their notebooks.', blank: 'number', slots: { number: 'numbers' } },
+      { template: 'Some {food} was saved for the journey home.', blank: 'food', slots: { food: 'foods' } },
+      { template: 'The room buzzed with {action} and laughter.', blank: 'action', slots: { action: 'actions' } },
+      { template: '{Name} checked that the {object} was working properly.', blank: 'object', slots: { Name: 'names', object: 'objects' } },
+      { template: 'Everyone admired the {adjective} project on display.', blank: 'adjective', slots: { adjective: 'adjectives' } },
+      { template: 'A basket of {food} waited on the picnic table.', blank: 'food', slots: { food: 'foods' } },
+      { template: '{Name} planned to {verb} again after lunch.', blank: 'verb', slots: { Name: 'names', verb: 'verbs' } },
+      { template: 'The sky stayed {weather} throughout the adventure.', blank: 'weather', slots: { weather: 'weather' } },
+      { template: 'The pupils felt {feeling} about their work.', blank: 'feeling', slots: { feeling: 'feelings' } },
+      { template: 'The table held {number} sets of tidy books.', blank: 'number', slots: { number: 'numbers' } },
+      { template: '{Name} built a model of the {place} during art club.', blank: 'place', slots: { Name: 'names', place: 'places' } },
+      { template: 'They practised {action} softly in the {place}.', blank: 'action', slots: { action: 'actions', place: 'places' } },
+      { template: 'The lesson about {topic} made everyone smile.', blank: 'topic', slots: { topic: 'topics' } },
+      { template: '{Name} wrote a sentence about {topic} today.', blank: 'topic', slots: { Name: 'names', topic: 'topics' } },
+      { template: 'They watched a short film on {topic} during assembly.', blank: 'topic', slots: { topic: 'topics' } },
+      { template: 'The folder held plans for {topic} this term.', blank: 'topic', slots: { topic: 'topics' } },
+      { template: 'After {time}, they packed the equipment away.', blank: 'time', slots: { time: 'times' } },
+      { template: '{Name} reminded the group about {time} tomorrow.', blank: 'time', slots: { Name: 'names', time: 'times' } },
+      { template: '{Name} discovered a {adjective} {object} in the cupboard.', blank: 'object', slots: { Name: 'names', adjective: 'adjectives', object: 'objects' } },
+      { template: 'The story featured a brave {animal} and a hidden {object}.', blank: 'animal', slots: { animal: 'animals', object: 'objects' } },
+      { template: 'They planned to visit the {place} again next week.', blank: 'place', slots: { place: 'places' } },
+      { template: 'A plate of {food} was passed around the circle.', blank: 'food', slots: { food: 'foods' } },
+      { template: '{Name} promised to stay {feeling} during the challenge.', blank: 'feeling', slots: { Name: 'names', feeling: 'feelings' } },
+      { template: 'The sky looked {weather} as they set off.', blank: 'weather', slots: { weather: 'weather' } },
+      { template: 'Their project about {topic} won applause.', blank: 'topic', slots: { topic: 'topics' } },
+      { template: 'The timetable showed {time} starting early.', blank: 'time', slots: { time: 'times' } },
+      { template: '{Name} likes to {verb} before {time} begins.', blank: 'verb', slots: { Name: 'names', verb: 'verbs', time: 'times' } },
+      { template: 'The coach asked for {number} volunteers to tidy up.', blank: 'number', slots: { number: 'numbers' } },
+      { template: 'A trail of {animal} footprints led to the {place}.', blank: 'animal', slots: { animal: 'animals', place: 'places' } },
+      { template: '{Name} carefully packed the {object} and the {objectB}.', blank: 'object', slots: { Name: 'names', object: 'objects', objectB: 'objects' } },
+      { template: 'The classroom buzzed with {action} this morning.', blank: 'action', slots: { action: 'actions' } },
+      { template: 'They enjoyed warm {food} during {time}.', blank: 'food', slots: { food: 'foods', time: 'times' } },
+      { template: 'The notes described a {adjective} journey through the {place}.', blank: 'adjective', slots: { adjective: 'adjectives', place: 'places' } }
+    ];
+
+    const $lines = document.getElementById('lines');
+    const $options = document.getElementById('options');
+    const $show = document.getElementById('show');
+    const $next = document.getElementById('next');
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function randomWord(category) {
+      const pool = WORD_BANK[category] || [];
+      if (!pool.length) return 'blank';
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function pickUniqueWord(category, usedWords) {
+      const pool = shuffle(WORD_BANK[category] || []);
+      for (const candidate of pool) {
+        if (!usedWords.has(candidate)) {
+          usedWords.add(candidate);
+          return candidate;
+        }
+      }
+      if (!pool.length) return 'blank';
+      const fallback = pool[Math.floor(Math.random() * pool.length)];
+      usedWords.add(fallback);
+      return fallback;
+    }
+
+    function createLine(pattern, usedWords) {
+      const placeholderRegex = /{([^}]+)}/g;
+      let output = '';
+      let lastIndex = 0;
+      let answer = null;
+
+      let match;
+      while ((match = placeholderRegex.exec(pattern.template)) !== null) {
+        const key = match[1];
+        const category = pattern.slots[key];
+        const before = pattern.template.slice(lastIndex, match.index);
+        output += before;
+
+        if (!category) {
+          output += match[0];
+          lastIndex = placeholderRegex.lastIndex;
+          continue;
+        }
+
+        if (key === pattern.blank) {
+          const word = pickUniqueWord(category, usedWords);
+          answer = word;
+          output += `<span class="blank" data-answer="${word}">_____</span>`;
+        } else {
+          output += randomWord(category);
+        }
+
+        lastIndex = placeholderRegex.lastIndex;
+      }
+
+      output += pattern.template.slice(lastIndex);
+
+      return {
+        html: output,
+        answers: answer ? [answer] : []
+      };
+    }
+
+    function generateExercise() {
+      const usedWords = new Set();
+      const templates = shuffle(PATTERNS).slice(0, LINES_PER_EXERCISE);
+      const lines = templates.map((template) => createLine(template, usedWords));
+      const answers = lines.flatMap((line) => line.answers).filter(Boolean);
+
+      $lines.innerHTML = lines
+        .map((line) => `<li class="line">${line.html}</li>`)
+        .join('');
+
+      const wordOptions = shuffle(answers);
+      $options.innerHTML = wordOptions
+        .map((word) => `<li class="tag">${word}</li>`)
+        .join('');
+
+      Array.from(document.querySelectorAll('.blank')).forEach((span) => {
+        span.classList.remove('revealed');
+        span.textContent = '_____';
+      });
+
+      $show.disabled = false;
+    }
+
+    function showAnswers() {
+      document.querySelectorAll('.blank').forEach((span) => {
+        span.textContent = span.dataset.answer;
+        span.classList.add('revealed');
+      });
+      $show.disabled = true;
+    }
+
+    $show.addEventListener('click', showAnswers);
+    $next.addEventListener('click', generateExercise);
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (!$show.disabled) showAnswers();
+      }
+      if (event.key === ' ') {
+        event.preventDefault();
+        generateExercise();
+      }
+    });
+
+    generateExercise();
+  })();
+</script>
+</body>
+</html>
