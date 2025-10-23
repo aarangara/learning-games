@@ -51,6 +51,19 @@
     }
     .btn-show { background: var(--accent); color: white; }
     .btn-next { background: var(--accent2); color: #111827; }
+    .back {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 16px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back:hover,
+    .back:focus {
+      text-decoration: underline;
+      outline: none;
+    }
   </style>
 </head>
 <body>
@@ -68,6 +81,7 @@
       <button class="btn-show" id="show">Show Answer</button>
       <button class="btn-next" id="next">Next</button>
     </div>
+    <a class="back" href="index.html">← Back to menu</a>
   </div>
 
 <script>
